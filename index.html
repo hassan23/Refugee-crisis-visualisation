@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.0.1/spin.min.js'></script> 
+    <style>
+      circle {
+        fill: orange;
+        stroke: black;
+        stroke-width: 0.7;
+        opacity: 1;
+      }
+      h1{
+        position: fixed;
+        float: center;
+        margin-top: 300px;
+        color: black;
+        vertical-align: center;
+        text-align: center;
+        font-family: Helvetica;
+
+      }
+      h2 {
+        text-align: center;
+        color: #596575;
+        font-family: Helvetica;
+        float: center;
+      }
+
+      div.fleeing {
+        position: fixed;
+        float: left;
+        top: 5px;
+        left: 50px;
+        margin-top: 10px;
+      }
+
+      div.play {
+        position: fixed;
+        float: left;
+        top: 5px;
+        left: 50px;
+        margin-top: 550px;
+      }
+
+      div.play div {
+        float: left;
+        background-color: #EF5350;
+        color: white;
+        height: 25px;
+        padding-top: 10px;
+        margin: 7px;
+        width: 100px;
+        font-family: "Helvetica";
+        text-align: center;
+        border-radius: 3px;
+        font-size: 11px;
+      }
+
+      div.arriving {
+        position: fixed;
+        float: left;
+        top: 5px;
+        left: 40px;
+        margin-top: 10px;
+        border-color: black;
+        margin-left: 100px;
+      }
+
+      div.year_flash {
+        position: fixed;
+        float: left;
+        top: 5px;
+        left: 30px;
+        margin-top: 400px;
+        border-color: black;
+      }
+
+      div.year_flash div {
+        float: left;
+        color: #ffab00;
+        font-size: 60px;
+        padding-top: 10px;
+        margin: 20px;
+        width: 100px;
+        font-family: "Helvetica";
+        text-align: center;
+        border-radius: 3px;
+      }
+
+      div.zoom{
+        float: right;
+        position: fixed;
+        top: 5px;
+        right: 50px;
+        margin-top: 20px;
+
+      }
+      div.zoom div{
+        float: right;
+        font-size: 15px;
+        text-align: center;
+        width: 60px;
+        color: white;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        border-radius: 3px;
+        background-color: #EF5350;
+        height: 20px;
+      }
+      div.fleeing div {
+        float: left;
+        background-color: #ffab00;
+        color: white;
+        height: 20px;
+        padding-top: 10px;
+        margin: 7px;
+        width: 60px;
+        font-family: "Helvetica";
+        text-align: center;
+        border-radius: 3px;
+        font-size: 11px;
+      }
+
+      div.arriving div {
+        float: left;
+        color: black;
+        height: 20px;
+        padding-top: 10px;
+        margin: 7px;
+        width: 60px;
+        border: 1px solid black;
+        font-family: "Helvetica";
+        text-align: center;
+        border-radius: 3px;
+        border-color: black;
+        font-size: 11px;
+      }
+      /*body{
+        background-color:#6d7988;
+      }*/
+      .line {
+          fill: none;
+          stroke: #ffab00;
+          stroke-width: 0.5;
+      }
+      .buttonRect{
+
+      }
+     .features.active {
+        fill: balck;
+      } 
+    div.tooltip { 
+      position: absolute;     
+      text-align: center;     
+      width: 120px;          
+      height: 50px;         
+      padding: 2px;
+      font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;  
+      font-size: 10px;       
+      background: #ffab00; 
+      border: 1px;
+      border-color: #ffab00;    
+      border-radius: 5px;     
+      pointer-events: none;     
+    }
+    div.years_buttons {
+        position: relative;
+        float: left;
+        top: 5px;
+        padding-top: 10px;
+        left: 15px;
+      }
+
+      div.years_buttons div {
+        float: left;
+        background-color: #28303A;
+        color: white;
+        font-size: 11px;
+        height: 25px;
+        font-family: helvetica;
+        padding: 3px;
+        padding-top: 12px;
+        margin: 0px;
+      }
+    </style>
+    <script type="text/javascript"> 
+      /**
+      This functions gets called when the data of geo gets loded
+      This function does all the work 
+      **/ 
+      function draw(geo_data) {
+        "use strict";
+        // Scaling setup for the chart
+        var margin = 75, 
+            width = 1400 - margin,
+            height = 600 - margin,
+            active = d3.select(null);
+
+        // setting the title 
+        d3.select("body")
+          .append("h2")
+          .text("Refugee Crises 1975 - 2016");
+
+        // Inserting the svg
+        var svg = d3.select("body")
+            .append("svg")
+            .attr("width", width + margin)
+            .attr("height", height + margin)
+            .append('g')
+            .attr('class', 'map');
+
+        // config for the spinner which shows at the center of the screen
+        var opts = {
+            lines: 9, // The number of lines to draw
+            length: 20, // The length of each line
+            width: 10, // The line thickness
+            radius: 20, // The radius of the inner circle
+            color: '#EE3124', // #rgb or #rrggbb or array of colors
+            speed: 1.9, // Rounds per second
+            trail: 40, // Afterglow percentage
+            className: 'spinner', // The CSS class to assign to the spinner
+          };
+          var target = document.getElementById('load');
+          var spinner = new Spinner(opts).spin(target);
+
+        // setting the tooltip div
+        var div = d3.select("body").append("div") 
+        .attr("class", "tooltip")     
+        .style("opacity", 0);
+
+        // fill the years array
+        var years = [];
+        var current_year = 1975;
+        for(var i = 1975; i <= 2016; i += 1)
+            years.push(i);
+
+        // initialisation of projection
+        var projection = d3.geo.mercator()
+                               .scale(200)
+                               .rotate([-11, 0])
+                               .translate([width / 2, height / 1.3]);
+
+        var path = d3.geo.path().projection(projection);
+
+        // adding the map on the SVG
+        var map = svg.selectAll('path')
+                     .data(geo_data.features)
+                     .enter()
+                     .append('path')
+                     .attr('d', path)
+                     .attr('class','features')
+                     .style('fill', '#28303A')
+                     .style('stroke', '#C4C4C4')
+                     .style('stroke-width', 0.5);
+
+        /**
+        This Function contains the procedure to show the refugees 
+        Inflow and out flow from various countrees.
+        This Function Gest called When the UNdata(refugee data) gets loaded 
+        **/
+        function plot_points(data) {
+          
+          var zoom_flag = true; //For country zoom fuctionality
+          var path_drawn = false;
+          var mode = "Fleeing"; // for which type of data we wanna see people fleeing or people taking refuge
+          var play_pause; // Play apuse button
+          var years_buttons; // for selection the buttons of years
+          var refugees_by_mode; // will stored the data of refugees based on the mode we select
+          var mode_index = 0; // which coordinate to select based on the mode
+          var color = "#ffab00"; 
+          var previous_country_selected; 
+          
+          // adding years label at the bottom left of the page
+          var year_flash = d3.select("body")
+                              .append("div")
+                              .attr("class", "year_flash")
+                              .selectAll("div")
+                              .data([String(current_year)])
+                              .enter()
+                              .append("div")
+                              .text(function(d) {
+                                  return d;
+                              });
+          
+          // adding various kinds of buttons (for changing mode, enabel disable zooing functionality etc)
+          add_radio_buttons();
+          
+          /**
+          This function shapes our data in to nested form first based on years and then based on countries with categories of fleeing and arriving
+          eg.
+              1975 ->
+                    Fleeing from ->
+                                  India,
+                                  albania
+                                  .....
+                                  .....
+
+                    Fleeing to   ->
+                                  USA,
+                                  Germany
+                                  ......
+                                  ......
+              1976 ->
+              .....
+              ......
+              ......
+              2016 ->
+              .....
+              .....
+
+          **/
+          function agg_year(leaves) {
+                var total_in_a_year = d3.sum(leaves, function(d) {
+                    return d['Refugees'];
+                });
+                
+                //Furthur grouping and aggregation based on countries
+                function agg_country(country_list){
+                  var total_in_a_country = d3.sum(country_list, function(d) {
+                                      return d['Refugees'];
+                                  });
+                  
+                  var countries_fleeing = []
+                  var countries = geo_data.features;
+                  var coords = country_list.forEach(function(d) {
+                  var geo_data_ins = { type: "LineString", coordinates: [0,0],center_coord:[0,0]};
+                  var country_to = countries.filter(function(country) {
+                    return country.properties.name.trim() == country_map[d['Country or territory of origin'].trim()];
+                  });
+                  if(country_to && country_to.length > 0){
+                    geo_data_ins.to_or_from = d['Country or territory of asylum or residence'];
+                    geo_data_ins.refugees = d['Refugees'];
+                    geo_data_ins.coordinates[0] = d3.geo.centroid(country_to[0]);
+                    geo_data_ins.center_coord[0] = projection(d3.geo.centroid(country_to[0]));
+                  }
+                  var country_from = countries.filter(function(country) {
+                    return country.properties.name.trim() == country_map[d['Country or territory of asylum or residence'].trim()];
+                  });
+                  if(country_from && country_from.length > 0){
+                    geo_data_ins.from_or_to = d['Country or territory of origin'];
+                    geo_data_ins.coordinates[1] = d3.geo.centroid(country_from[0]);
+                    geo_data_ins.center_coord[1] = projection(d3.geo.centroid(country_from[0]));
+                  }
+                    // countries.forEach(function(country) {
+                    //   if(country.properties.name.trim() == country_map[d['Country or territory of origin'].trim()]){
+                    //     geo_data_ins.to_or_from = d['Country or territory of asylum or residence'];
+                    //     geo_data_ins.refugees = d['Refugees'];
+                    //     geo_data_ins.coordinates[0] = d3.geo.centroid(country);
+                    //     geo_data_ins.center_coord[0] = projection(d3.geo.centroid(country));
+                    //   }
+                    //   if(country.properties.name.trim() == country_map[d['Country or territory of asylum or residence'].trim()]){
+                    //     geo_data_ins.from_or_to = d['Country or territory of origin'];
+                    //     geo_data_ins.coordinates[1] = d3.geo.centroid(country);
+                    //     geo_data_ins.center_coord[1] = projection(d3.geo.centroid(country));
+                    //   }
+                    // });
+                    countries_fleeing.push(geo_data_ins);
+                  });
+
+                  return {
+                    'total_refugee' : total_in_a_country,
+                    'countries_flee_coords': countries_fleeing
+                  } 
+                }
+
+                // grouping the data based on from where the people are fleeng
+                var fleeing_to =  d3.nest()
+                           .key(function(d) {
+                              return d['Country or territory of origin'];
+                           })
+                           .rollup(agg_country)
+                           .entries(leaves);
+
+                // grouping the data based on to where the people are taking refuge
+                var fleeing_from =  d3.nest()
+                           .key(function(d) {
+                              return d['Country or territory of asylum or residence'];
+                           })
+                           .rollup(agg_country)
+                           .entries(leaves);
+              
+
+                return {
+                  'total_refugee' : total_in_a_year,
+                   'fleeing_from': fleeing_from,
+                   'fleeing_to': fleeing_to
+                };
+            }
+          
+          // nesting grouping based on years
+          var nested = d3.nest()
+                           .key(function(d) {
+                              return d['Year'];
+                           })
+                           .rollup(agg_year)
+                           .entries(data);
+
+            function key_func(d) {
+                return d['key'];
+              }
+          // stopping the spinner once the data gets loaded
+          spinner.stop();
+          console.log(nested);
+          
+          /**
+          This function add Buttons to change the mode(Fleeing or arriving),
+          It also adds the Play pause button and Zoom enable disabel buttton
+          It also add the button for all years at the bottom of the screen
+          **/
+          function add_radio_buttons() {
+            var flee_btn = d3.select("body")
+                        .append("div")
+                        .attr("class", "fleeing")
+                        .selectAll("div")
+                        .data(['Fleeing'])
+                        .enter()
+                        .append("div")
+                        .text(function(d) {
+                            return d;
+                        });
+
+            play_pause = d3.select("body")
+                        .append("div")
+                        .attr("class", "play")
+                        .selectAll("div")
+                        .data(['Play'])
+                        .enter()
+                        .append("div")
+                        .text(function(d) {
+                            return d;
+                        });
+
+            var arv_btn = d3.select("body")
+                        .append("div")
+                        .attr("class", "arriving")
+                        .selectAll("div")
+                        .data(['Arriving'])
+                        .enter()
+                        .append("div")
+                        .text(function(d) {
+                            return d;
+                        });
+
+              // binding event on fleeing button mode
+              flee_btn.on("click", function(d) {
+
+                        mode = "Fleeing";
+                        
+                        d3.select(".fleeing")
+                          .selectAll("div")
+                          .transition()
+                          .duration(500)
+                          .style("color", "white")
+                          .style("background", "#ffab00")
+                          .style('border',"1px solid white");
+
+                        d3.select(".arriving div")
+                          .transition()
+                          .duration(500)
+                          .style("background-color", "white")
+                          .style("color", "black")
+                          .style('border',"1px solid black");
+                        update(current_year);
+                    });
+              // binding event on arriving button mode
+              arv_btn.on("click", function(d) {
+
+                    mode = "Arriving";
+                        
+                        d3.select(".arriving")
+                          .selectAll("div")
+                          .transition()
+                          .duration(500)
+                          .style("color", "white")
+                          .style("background", "rgb(0, 188, 212)")
+                          .style('border',"1px solid white");
+
+                        d3.select(".fleeing div")
+                          .transition()
+                          .duration(500)
+                          .style("background-color", "white")
+                          .style("color", "black")
+                          .style('border',"1px solid black");
+                        update(current_year);
+              });
+
+
+              var zoom_btn = d3.select("body")
+                        .append("div")
+                        .attr("class", "zoom")
+                        .selectAll("div")
+                        .data(['\uD83D\uDD0E'])
+                        .enter()
+                        .append("div")
+                        .text(function(d) {
+                            return d;
+                        });
+              
+              // binding event on zoom button
+              zoom_btn.on("click", function(d) {
+                console.log(d);
+                if(zoom_flag){
+                        d3.select(".zoom")
+                          .selectAll("div")
+                          .transition()
+                          .duration(500)
+                          .style("color", "white")
+                          .style("background", "#81C784")
+                      zoom_flag = false;
+                        }
+                else{
+                  d3.select(".zoom")
+                          .selectAll("div")
+                          .transition()
+                          .duration(500)
+                          .style("color", "white")
+                          .style("background", "#EF5350")
+                    zoom_flag = true;
+                    }
+              });
+
+              years_buttons = d3.select("body")
+                        .append("div")
+                        .attr("class", "years_buttons")
+                        .selectAll("div")
+                        .data(years)
+                        .enter()
+                        .append("div")
+                        .text(function(d) {
+                            return d;
+                        });
+          }
+
+          /**This function runs in continous intervals every time play button is clicked
+              It also runs whenever a year buttons is clicked
+              It also runs whenever a mode buttons is clicked
+          **/
+          function update(year) {
+
+              // removing all the path lines between countries before updation 
+              d3.selectAll("path.line").remove();
+
+              // get the data for a particular year
+              var filtered = nested.filter(function(d) {
+                  return d['key'] == year;
+              });
+              current_year = year;
+
+              // getting the data based on mode
+              if(mode == "Fleeing"){
+                refugees_by_mode = filtered[0].values.fleeing_to;
+                mode_index = 0;
+                color = "#ffab00";
+              }
+              if(mode == "Arriving"){
+                refugees_by_mode = filtered[0].values.fleeing_from;
+                mode_index = 1;
+                color = "#00BCD4";
+              }
+              
+              var refugee_max = d3.max(refugees_by_mode, function(d) {
+                return d.values['total_refugee'];
+              });
+
+              // setting the range of the radius of the circle based on the maximum refugees fleeing on that year
+              var radius = d3.scale.sqrt()
+                           .domain([0, refugee_max])
+                           .range([0, 40]);
+            
+              //adding the data to the svg
+              var circles = svg.selectAll('circle').data(filtered,key_func);
+                               
+              circles.exit().remove();
+
+              // setting the color and text of the year showing in the Big font
+              year_flash.style('color',color);
+              year_flash.text(current_year);
+              
+              // adding the circles over the map
+              svg.append('g').attr("class", "bubble")
+                .selectAll("circle")
+                .data(refugees_by_mode.sort(function(a, b) { 
+                    return b.values['total_refugee'] - a.values['total_refugee']; // sorting the countries based on total refugees
+                 }), key_func)
+                .enter()
+                .append("circle")
+                .on('mouseover',function(d) { // fomating the tool tip based on mode on mouse over event
+                  var h = '<center><b>'+d.values.total_refugee+'</b><center><br>'
+                  if(mode == "Fleeing")
+                    h+= '<b>Peoples displaced from '+ d.key +'</b><br>';
+                  if(mode == "Arriving")
+                    h+= '<b>Peoples took refuge in '+ d.key +'</b><br>';
+
+                 div.transition()   
+                .duration(10)    
+                .style("opacity", .7);    
+                div.html(h)
+                .style("left", (d3.event.pageX) + "px")   
+                .style("top", (d3.event.pageY) + "px")
+                .style("background-color",color);  
+                })          
+                .on("mouseout", function(d) {   
+                    div.transition()    
+                        .duration(500)    
+                        .style("opacity", 0);
+                       })
+                  .transition()
+                  .duration(500)
+                   .attr('cx', function(d) { return d.values['countries_flee_coords'][0].center_coord[mode_index][0]; })
+                   .attr('cy', function(d) { return d.values['countries_flee_coords'][0].center_coord[mode_index][1]; })
+                   .style('fill','none')
+                   .style('stroke',color)
+                   .style('stroke-width',2)
+                   .attr('r', function(d) {
+                        return radius(d.values['total_refugee']);
+                   });
+
+                   d3.selectAll("circle").filter(function(d){
+                    if(d.values.countries_flee_coords[0].center_coord[mode_index] === 0)
+                      return d;
+                    }).remove()
+              
+          }
+
+          // the Function gets called whenever a coutry is being clicked
+          function clicked(d) {
+            // remove all the line between countries removed
+            d3.selectAll("path.line").remove();
+            var filtered = nested.filter(function(d) {
+                  return d['key'] == current_year;
+              });
+
+            // getting the data based on mode
+            var fleeing_to;
+            if(mode == "Fleeing")
+              fleeing_to = filtered[0].values.fleeing_to.filter(function(c){
+                return country_map[c['key'].trim()] == d['properties']['name'];
+              });
+            if(mode == "Arriving")
+              fleeing_to = filtered[0].values.fleeing_from.filter(function(c){
+                return country_map[c['key'].trim()] == d['properties']['name'];
+              });
+            var coords = [];
+            if(!fleeing_to || fleeing_to.length > 0)
+              coords = fleeing_to[0].values.countries_flee_coords;
+
+            // drawing all the path for the selected country showing the 
+            //inflow ar outflow of refugees based in the mode we select
+            coords.forEach(function(each_coord) {
+              if(each_coord.coordinates.indexOf(0) == -1){
+                svg.append("path")
+                    .datum(each_coord) // in geojson form
+                    .attr("d", path)  // use your path
+                    .attr('class', 'line')
+                    .style('stroke',color)
+                    .on('mouseover',function(d) {  // tooltip when we mousse over the line
+                    var h = '<center><b>'+d.refugees+'</b><center><br>'
+                    if(mode == "Fleeing")
+                      h+= 'People displaced to <b> '+d.to_or_from +'</b>'
+                    if(mode == "Arriving")
+                      h+= 'People Taking refuge from <b> '+d.from_or_to +'</b>'
+                    div.transition()   
+                    .duration(10)   
+                  .style("opacity", .7);    
+                  div.html(h)
+                  .style("left", (d3.event.pageX) + "px")   
+                  .style("top", (d3.event.pageY) + "px")
+                  .style("background-color",color);  
+                  })          
+                  .on("mouseout", function(d) {   
+                      div.transition()    
+                          .duration(500)    
+                          .style("opacity", 0);
+                         })
+              }
+            });
+
+            // if the map is already zoomed to a country it will reset the map to its initial position
+            if (active.node() === this) return reset(coords, d, this); 
+            
+            // if zoom is enables selected country gets zoomed in 
+            if(zoom_flag){
+              active.classed("active", false).style('fill','#28303A');
+              active = d3.select(this).classed("active", true).style('fill','black');
+              var bounds = path.bounds(d),
+                dx = bounds[1][0] - bounds[0][0],
+                dy = bounds[1][1] - bounds[0][1],
+                x = (bounds[0][0] + bounds[1][0]) / 2,
+                y = (bounds[0][1] + bounds[1][1]) / 2,
+                scale = 0.7 / Math.max(dx / width, dy / height),
+                translate = [width / 2 - scale * x, height / 2 - scale * y];
+
+              svg.transition()
+                .duration(750)
+                .style("stroke-width", 1.5 / scale + "px")
+                .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
+            }
+            if(previous_country_selected == d['properties']['name'] && !zoom_flag){
+             d3.selectAll("path.line").remove(); 
+             previous_country_selected = undefined;
+            }
+            else if(!zoom_flag)
+              previous_country_selected = d['properties']['name'];
+          }
+
+          // fucntion to reset the map if zoomed
+          function reset(coords, d, that) {
+            active.classed("active", false).style('fill','#28303A');
+            active = d3.select(null);
+            d3.selectAll("path.line").remove();
+            svg.transition()
+                .duration(750)
+                .style("stroke-width", "1.5px")
+                .attr("transform", "");
+          }
+
+          // binding a clicked function whenever a country gets called  
+          svg.selectAll('path').on("click", clicked);
+
+          var year_idx = 0;
+          // binding the event when clicking the years button
+          years_buttons.on("click", function(d) {
+                    year_idx = years.indexOf(d);
+                    d3.select(".years_buttons")
+                      .selectAll("div")
+                      .transition()
+                      .duration(500)
+                      .style("color", "white")
+                      .style("background", "#28303A");
+
+                    d3.select(this)
+                      .transition()
+                      .duration(500)
+                      .style("background", color)
+                      .style("color", "white");
+                    update(d);
+                });
+          
+          var year_interval;
+          // when play pause button gets clicked this event gets called
+          play_pause.on("click", function(d) {
+            
+            var button = d3.select(this);
+            if (button.text() == "Play") {           
+              button.text("Pause");
+              button.style('background-color','#66BB6A');
+              //setting the interval which calls update for each year untill 2016
+              year_interval = setInterval(function() {
+              
+                d3.select(".years_buttons")
+                          .selectAll("div")
+                          .style("color", "white")
+                          .style("background", "#28303A");
+                
+                if(years[year_idx] == undefined)
+                  year_idx = 0;
+                
+                d3.select(".years_buttons")
+                  .selectAll("div")
+                  .transition()
+                  .duration(500)
+                  .filter(function(d) {
+                    return d === years[year_idx]
+                  })
+                  .style("background", color)
+                  .style("color", "white");
+
+                update(years[year_idx]);
+                year_idx+=1;
+                
+                if(year_idx >= years.length) {
+                  button.text("Play");
+                  button.style('background-color','#EF5350');
+                  clearInterval(year_interval);
+                }
+              
+              },1000)
+            }
+            else{
+              button.text("Play");
+              button.style('background-color','#EF5350');
+              clearInterval(year_interval);
+            }          
+          });
+          
+        }
+        // loading the UN refugees data
+        d3.csv("UNdata.csv", plot_points);
+
+    };
+
+    </script>
+  </head>
+<body>
+  <script type="text/javascript">
+  /*
+    Use D3 to load the GeoJSON file
+    */
+    
+    d3.json("world_countries.json", draw);
+
+    /**Mapping the countries UN data country name with geo data country names**/
+    var country_map = {
+      "Iraq":"Iraq",
+      "Islamic Rep. of Iran":"Iran",
+      "Pakistan":"Pakistan",
+      "China":"China",
+      "Dem. Rep. of the Congo":"Democratic Republic of the Congo",
+      "Egypt":"Egypt",
+      "Montenegro":"Montenegro",
+      "Peru":"Peru",
+      "Russian Federation":"Russia",
+      "Serbia (and Kosovo: S/RES/1244 (1999))":"Republic of Serbia",
+      "State of Palestine":"West Bank",
+      "Syrian Arab Rep.":"Syria",
+      "The former Yugoslav Rep. of Macedonia":"Macedonia",
+      "Turkey":"Turkey",
+      "Ukraine":"Ukraine",
+      "Uzbekistan":"Uzbekistan",
+      "Afghanistan":"Afghanistan",
+      "Burundi":"Burundi",
+      "Cameroon":"Cameroon",
+      "Central African Rep.":"Central African Republic",
+      "Chad":"Chad",
+      "CÃ´te d'Ivoire":"Ivory Coast",
+      "Eritrea":"Eritrea",
+      "Guinea":"Guinea",
+      "Liberia":"Liberia",
+      "Libya":"Libya",
+      "Mali":"Mali",
+      "Nigeria":"Nigeria",
+      "Senegal":"Senegal",
+      "Somalia":"Somalia",
+      "Sudan":"Sudan",
+      "Togo":"Togo",
+      "Western Sahara":"Western Sahara",
+      "Yemen":"Yemen",
+      "Algeria":"Algeria",
+      "Congo":"Republic of the Congo",
+      "Ethiopia":"Ethiopia",
+      "Guinea-Bissau":"Guinea Bissau",
+      "Haiti":"Haiti",
+      "Mauritania":"Mauritania",
+      "Rwanda":"Rwanda",
+      "Sierra Leone":"Sierra Leone",
+      "South Africa":"South Africa",
+      "Uganda":"Uganda",
+      "United Rep. of Tanzania":"United Republic of Tanzania",
+      "Zambia":"Zambia",
+      "Albania":"Albania",
+      "Angola":"Angola",
+      "Armenia":"Armenia",
+      "Bangladesh":"Bangladesh",
+      "Belarus":"Belarus",
+      "Benin":"Benin",
+      "Bolivia (Plurinational State of)":"Bolivia",
+      "Bosnia and Herzegovina":"Bosnia and Herzegovina",
+      "Brazil":"Brazil",
+      "Bulgaria":"Bulgaria",
+      "Chile":"Chile",
+      "Colombia":"Colombia",
+      "Costa Rica":"Costa Rica",
+      "Croatia":"Croatia",
+      "Cuba":"Cuba",
+      "Dominican Rep.":"Dominican Republic",
+      "Ecuador":"Ecuador",
+      "El Salvador":"El Salvador",
+      "Gambia":"Gambia",
+      "Georgia":"Georgia",
+      "Ghana":"Ghana",
+      "Guatemala":"Guatemala",
+      "Honduras":"Honduras",
+      "Hungary":"Hungary",
+      "India":"India",
+      "Italy":"Italy",
+      "Jordan":"Jordan",
+      "Kazakhstan":"Kazakhstan",
+      "Kyrgyzstan":"Kyrgyzstan",
+      "Lebanon":"Lebanon",
+      "Mexico":"Mexico",
+      "Morocco":"Morocco",
+      "Nicaragua":"Nicaragua",
+      "Paraguay":"Paraguay",
+      "Philippines":"Philippines",
+      "Romania":"Romania",
+      "Sri Lanka":"Sri Lanka",
+      "Stateless":"None",
+      "Tunisia":"Tunisia",
+      "Turkmenistan":"Turkmenistan",
+      "United States":"USA",
+      "Various":"None",
+      "Venezuela (Bolivarian Republic of)":"Venezuela",
+      "Zimbabwe":"Zimbabwe",
+      "Azerbaijan":"Azerbaijan",
+      "Argentina":"Argentina",
+      "Bahrain":"None",
+      "Bhutan":"Bhutan",
+      "Botswana":"Botswana",
+      "Cambodia":"Cambodia",
+      "Czechia":"Czech Republic",
+      "Dem. People's Rep. of Korea":"South Korea",
+      "Djibouti":"Djibouti",
+      "Estonia":"Estonia",
+      "Fiji":"Fiji",
+      "France":"France",
+      "Germany":"Germany",
+      "Greece":"Greece",
+      "Hong Kong SAR, China":"None",
+      "Indonesia":"Indonesia",
+      "Israel":"Israel",
+      "Jamaica":"Jamaica",
+      "Japan":"Japan",
+      "Kenya":"Kenya",
+      "Kuwait":"Kuwait",
+      "Lao People's Dem. Rep.":"Laos",
+      "Latvia":"Latvia",
+      "Malaysia":"Malaysia",
+      "Maldives":"None",
+      "Mauritius":"None",
+      "Mongolia":"Mongolia",
+      "Mozambique":"Mozambique",
+      "Myanmar":"Myanmar",
+      "Nepal":"Nepal",
+      "Netherlands":"Netherlands",
+      "New Zealand":"New Zealand",
+      "Niger":"Niger",
+      "Oman":"Oman",
+      "Papua New Guinea":"Papua New Guinea",
+      "Poland":"Poland",
+      "Rep. of Korea":"North Korea",
+      "Samoa":"None",
+      "Saudi Arabia":"Saudi Arabia",
+      "Singapore":"None",
+      "Solomon Islands":"Solomon Islands",
+      "South Sudan":"South Sudan",
+      "Sweden":"Sweden",
+      "Tajikistan":"Tajikistan",
+      "Thailand":"Thailand",
+      "Tibetans":"None",
+      "Timor-Leste":"East Timor",
+      "Tonga":"None",
+      "United Arab Emirates":"United Arab Emirates",
+      "United Kingdom":"England",
+      "Vanuatu":"Vanuatu",
+      "Viet Nam":"Vietnam",
+      "Burkina Faso":"Burkina Faso",
+      "Canada":"Canada",
+      "Equatorial Guinea":"Equatorial Guinea",
+      "Gabon":"Gabon",
+      "Madagascar":"Madagascar",
+      "Rep. of Moldova":"Rep. of Moldova",
+      "Slovakia":"Slovakia",
+      "Guyana":"Guyana",
+      "Lithuania":"Lithuania",
+      "Namibia":"Namibia",
+      "Spain":"Spain",
+      "Uruguay":"Uruguay",
+      "Portugal":"Portugal",
+      "Cabo Verde":"None",
+      "Slovenia":"Slovenia",
+      "Swaziland":"Swaziland",
+      "Antigua and Barbuda":"None",
+      "Bahamas":"The Bahamas",
+      "Barbados":"None",
+      "Belgium":"Belgium",
+      "Belize":"Belize",
+      "Cayman Islands":"None",
+      "Comoros":"None",
+      "Dominica":"None",
+      "Grenada":"None",
+      "Kiribati":"None",
+      "Lesotho":"Lesotho",
+      "Malawi":"Malawi",
+      "Panama":"Panama",
+      "Qatar":"Qatar",
+      "Saint Kitts and Nevis":"None",
+      "Saint Lucia":"None",
+      "Saint Vincent and the Grenadines":"None",
+      "San Marino":"None",
+      "Seychelles":"None",
+      "Suriname":"Suriname",
+      "Trinidad and Tobago":"Trinidad and Tobago",
+      "Turks and Caicos Islands":"None",
+      "Austria":"Austria",
+      "Sao Tome and Principe":"None",
+      "Australia":"Australia",
+      "Ireland":"Ireland",
+      "Luxembourg":"Luxembourg",
+      "Norway":"Norway",
+      "Switzerland":"Switzerland",
+      "Palau":"None",
+      "Tuvalu":"None",
+      "Andorra":"None",
+      "Anguilla":"None",
+      "Macao SAR, China":"None",
+      "Norfolk Island":"None",
+      "Denmark":"Denmark",
+      "Brunei Darussalam":"Brunei",
+      "Cook Islands":"None",
+      "Cyprus":"Cyprus",
+      "French Guiana":"France",
+      "CuraÃ§ao":"None",
+      "Finland":"Finland",
+      "Gibraltar":"None",
+      "Marshall Islands":"None",
+      "Monaco":"None",
+      "Niue":"None",
+      "Malta":"None",
+      "Iceland":"Iceland",
+      "Nauru":"None",
+      "French Polynesia":"None",
+      "Bermuda":"None",
+      "Holy See (the)":"None",
+      "Martinique":"None",
+      "Puerto Rico":"Puerto Rico"
+    }
+
+    
+  </script>
+  <section id='load'></section>
+</body>
+</html>
