@@ -28,7 +28,7 @@ Refugee Crisis is one of the biggest cirsis in the current times. In this visual
   * Most of the countries in the **Refugee Data** not matches with the **geo json** data due to different name of the same countries. A dictionary is being created to map the name of countries of the **refugee data** to the **geo json** data.  
   * Rest unmatched countries circles is being removed as they were appearing at the upper left corner of the SVG.
 
-#### Third(Final) Iteration (Index.html):
+#### Third(Final) Iteration (Refugee_final.html):
 
   * A play Pause Button is added to start the story from 1975 which will end at 2016 and then reset.
   * Functionality of Zooming in to a country is being added which can be enabled/disabled by the button which is being added at top right corner of the page.
